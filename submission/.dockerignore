@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.git
+.gitignore
+docker/
+k8s/
+tests/
+*.md
+.eslintrc.json
+.dockerignore

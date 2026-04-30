@@ -1,29 +1,80 @@
 steps:
-  # Step 1: Run linter
+  # Step 1: Install dependencies and run linter
   - name: 'node:20'
-    entrypoint: 'npm'
-    args: ['run', 'lint']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'npm ci && npm run lint'
     id: 'Lint'
 
   # Step 2: Run tests
   - name: 'node:20'
-    entrypoint: 'npm'
-    args: ['test']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'npm ci && npm test'
     id: 'Test'
 
-  # Step 3: Build & Deploy Container to Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
+  # Step 3: Build API container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api:latest'
+      - '-f'
+      - 'docker/Dockerfile.api'
+      - '.'
+    id: 'Build-API'
+
+  # Step 4: Build Worker container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker:latest'
+      - '-f'
+      - 'docker/Dockerfile.worker'
+      - '.'
+    id: 'Build-Worker'
+
+  # Step 5: Push API image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api'
+    id: 'Push-API'
+    waitFor: ['Build-API']
+
+  # Step 6: Push Worker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker'
+    id: 'Push-Worker'
+    waitFor: ['Build-Worker']
+
+  # Step 7: Deploy to GKE
+  - name: 'gcr.io/cloud-builders/gke-deploy'
     args:
       - 'run'
-      - 'deploy'
-      - 'election-education-bot'
-      - '--source'
-      - '.'
-      - '--region'
-      - 'us-central1'
-      - '--allow-unauthenticated'
-      - '--set-secrets=GEMINI_API_KEY=gemini-api-key:latest'
-    id: 'Deploy'
+      - '--filename=k8s/'
+      - '--cluster=${_GKE_CLUSTER}'
+      - '--location=${_GKE_ZONE}'
+      - '--project=$PROJECT_ID'
+    id: 'Deploy-GKE'
+    waitFor: ['Push-API', 'Push-Worker']
+
+substitutions:
+  _REGION: us-central1
+  _GKE_CLUSTER: election-cluster
+  _GKE_ZONE: us-central1-a
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
