@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Election Education Platform - Learn about voting processes, timelines, and systems.">
+  <title>Election Education Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <h1>Election Education Matrix</h1>
+    <nav aria-label="Main Navigation">
+      <button id="authBtn" class="btn primary-btn">Login</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="intro" aria-labelledby="intro-heading">
+      <h2 id="intro-heading">Understand Electoral Systems</h2>
+      <p>Democracy thrives on informed participation. Enter your questions about voter registration, election timelines, or how votes are counted.</p>
+    </section>
+
+    <section class="chat-interface" aria-labelledby="chat-heading">
+      <h2 id="chat-heading" class="sr-only">Chat Interface</h2>
+      
+      <div id="chatResponse" class="chat-response" aria-live="polite">
+        <!-- AI responses will appear here -->
+        <p class="placeholder-text">Waiting for your question...</p>
+      </div>
+
+      <form id="educationForm" class="education-form">
+        <label for="knowledgeLevel">Select Your Knowledge Level:</label>
+        <select id="knowledgeLevel" name="knowledgeLevel">
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+        </select>
+
+        <label for="queryInput">What would you like to know?</label>
+        <textarea id="queryInput" name="queryInput" rows="4" placeholder="E.g., How does the Electoral College work?" required></textarea>
+
+        <button type="submit" id="submitBtn" class="btn submit-btn">Ask AI Educator</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Election Education. Hosted securely on Google Cloud Run.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

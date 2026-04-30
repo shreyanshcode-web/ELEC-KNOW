@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: election-ingress
+  namespace: election-education
+  labels:
+    app.kubernetes.io/name: election-education
+  annotations:
+    # GKE-specific: use Google Cloud Load Balancer
+    kubernetes.io/ingress.class: "gce"
+    # Enable Google Cloud Armor for DDoS protection
+    cloud.google.com/armor-policy: "election-security-policy"
+    # Redirect HTTP to HTTPS
+    networking.gke.io/managed-certificates: "election-cert"
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  defaultBackend:
+    service:
+      name: api-service
+      port:
+        number: 80
+  rules:
+    - host: election-education.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 80

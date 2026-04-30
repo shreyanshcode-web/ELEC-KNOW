@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: election-education
+  labels:
+    app.kubernetes.io/name: election-education
+    app.kubernetes.io/part-of: election-education-platform

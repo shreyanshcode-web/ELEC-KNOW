@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  namespace: election-education
+  labels:
+    app: election-api
+    app.kubernetes.io/name: election-education
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: election-api
+  template:
+    metadata:
+      labels:
+        app: election-api
+    spec:
+      serviceAccountName: election-api-sa
+      containers:
+        # ---- Main API container ----
+        - name: api
+          image: REGION-docker.pkg.dev/PROJECT_ID/election-registry/election-api:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: election-config
+            - secretRef:
+                name: election-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+        # ---- Cloud SQL Auth Proxy sidecar ----
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.0
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "PROJECT_ID:REGION:election-db"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+
+      # Graceful shutdown
+      terminationGracePeriodSeconds: 30

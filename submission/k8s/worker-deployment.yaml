@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deployment
+  namespace: election-education
+  labels:
+    app: election-worker
+    app.kubernetes.io/name: election-education
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: election-worker
+  template:
+    metadata:
+      labels:
+        app: election-worker
+    spec:
+      serviceAccountName: election-api-sa
+      containers:
+        - name: worker
+          image: REGION-docker.pkg.dev/PROJECT_ID/election-registry/election-worker:latest
+          envFrom:
+            - configMapRef:
+                name: election-config
+            - secretRef:
+                name: election-secrets
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+        # Cloud SQL proxy for worker DB access
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.0
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "PROJECT_ID:REGION:election-db"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+
+      terminationGracePeriodSeconds: 60

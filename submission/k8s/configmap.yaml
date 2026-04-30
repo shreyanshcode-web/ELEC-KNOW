@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: election-config
+  namespace: election-education
+  labels:
+    app.kubernetes.io/name: election-education
+data:
+  NODE_ENV: "production"
+  PORT: "8080"
+  # Database — points to Cloud SQL Proxy sidecar
+  DB_HOST: "127.0.0.1"
+  DB_PORT: "5432"
+  DB_NAME: "election_education"
+  DB_POOL_MIN: "2"
+  DB_POOL_MAX: "10"
+  # Redis — points to Redis service in-cluster
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_CACHE_TTL: "3600"
+  # Kafka — points to Kafka service in-cluster
+  KAFKA_BROKERS: "kafka-service:9092"
+  KAFKA_CLIENT_ID: "election-api"
+  KAFKA_GROUP_ID: "election-workers"
+  # Topics
+  KAFKA_TOPIC_QUERY_SUBMITTED: "query.submitted"
+  KAFKA_TOPIC_ANALYTICS: "query.analytics"

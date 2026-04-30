@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: election-education
+  labels:
+    app: redis
+    app.kubernetes.io/name: election-education
+    app.kubernetes.io/component: cache
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      protocol: TCP
+      port: 6379
+      targetPort: 6379
