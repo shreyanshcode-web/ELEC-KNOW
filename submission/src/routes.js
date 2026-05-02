@@ -9,13 +9,38 @@ import { findOrCreateUser } from './models/user.model.js';
 import { createQuery } from './models/query.model.js';
 import { getAllTopics, getPopularTopics } from './models/topic.model.js';
 import { getUsageStats, getDailyQueryVolume } from './services/analytics.service.js';
+import { isDatabaseAvailable, testConnection } from './config/database.js';
+import { isRedisAvailable, testRedis } from './config/redis.js';
+import { isKafkaAvailable } from './config/kafka.js';
+import electionRoutes from './routes/election.routes.js';
 
 export const setupRoutes = (app) => {
   const router = Router();
 
-  // Health check endpoint — used by K8s liveness/readiness probes
+  // Mount election data API routes (voter lookup, turnout, results, etc.)
+  app.use('/api/election', electionRoutes);
+
+  // K8s LIVENESS probe — is the process alive? (lightweight, no dependency checks)
   router.get('/health', (req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  });
+
+  // K8s READINESS probe — can the app serve traffic? (checks dependencies)
+  router.get('/ready', async (req, res) => {
+    const dbOk = await testConnection();
+    const redisOk = await testRedis();
+
+    const ready = dbOk; // DB is required; Redis/Kafka are optional
+
+    res.status(ready ? 200 : 503).json({
+      status: ready ? 'ready' : 'not_ready',
+      dependencies: {
+        database: dbOk ? 'connected' : 'unavailable',
+        redis: redisOk ? 'connected' : 'unavailable (degraded)',
+        kafka: isKafkaAvailable() ? 'connected' : 'unavailable (degraded)',
+      },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   /**

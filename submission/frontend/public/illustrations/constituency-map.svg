@@ -1,0 +1,32 @@
+<svg width="520" height="420" viewBox="0 0 520 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mapBg" x1="40" y1="30" x2="460" y2="390" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FBFB"/>
+      <stop offset="1" stop-color="#FFF2E2"/>
+    </linearGradient>
+    <linearGradient id="regionFill" x1="160" y1="112" x2="344" y2="304" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D5EEEB"/>
+      <stop offset="1" stop-color="#F9E3CB"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="484" height="384" rx="34" fill="url(#mapBg)"/>
+  <path d="M84 106H436" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M84 166H436" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M84 226H436" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M84 286H436" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M126 78V342" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M210 78V342" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M294 78V342" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M378 78V342" stroke="#E4EEEF" stroke-width="12" stroke-linecap="round"/>
+  <path d="M173 108L224 88L278 114L336 104L362 144L346 198L376 244L344 304L274 324L232 298L176 310L130 258L146 196L122 150L173 108Z" fill="url(#regionFill)" stroke="#1A4B68" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M174 184C174 164.67 189.67 149 209 149C228.33 149 244 164.67 244 184C244 207.701 209 235 209 235C209 235 174 207.701 174 184Z" fill="#D47A3A"/>
+  <circle cx="209" cy="184" r="13" fill="#FFFCF6"/>
+  <path d="M270 236C270 219.431 283.431 206 300 206C316.569 206 330 219.431 330 236C330 256.315 300 280 300 280C300 280 270 256.315 270 236Z" fill="#0F766E"/>
+  <circle cx="300" cy="236" r="11" fill="#FFFCF6"/>
+  <path d="M220 174L280 226" stroke="#1A4B68" stroke-width="7" stroke-linecap="round" stroke-dasharray="10 10"/>
+  <rect x="334" y="64" width="116" height="74" rx="22" fill="#FFFCF6"/>
+  <rect x="356" y="86" width="72" height="10" rx="5" fill="#1A4B68" fill-opacity="0.2"/>
+  <rect x="356" y="106" width="56" height="10" rx="5" fill="#0F766E" fill-opacity="0.18"/>
+  <circle cx="388" cy="250" r="18" fill="#1A4B68" fill-opacity="0.12"/>
+  <circle cx="112" cy="310" r="14" fill="#D47A3A" fill-opacity="0.15"/>
+</svg>

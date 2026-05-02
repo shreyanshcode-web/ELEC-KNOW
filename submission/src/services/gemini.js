@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 
-// Initialize Gemini client using the Vertex AI / GenAI Google SDK
-const ai = new GoogleGenAI({});
+// Global instance to reuse once initialized
+let ai = null;
 
 /**
  * Communicates with the Gemini model to provide election education insights.
@@ -10,6 +10,14 @@ const ai = new GoogleGenAI({});
  * @returns {Promise<string>} The formulated educational response.
  */
 export const getElectionInsight = async (query, knowledgeLevel = 'Beginner') => {
+  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file to use the AI Copilot.');
+  }
+
+  if (!ai) {
+    ai = new GoogleGenAI({});
+  }
+
   const systemInstruction = `
 You are the Election Education Skill assistant.
 Your Purpose: Help users understand election processes, timelines, and civic procedures in a clear, neutral, interactive, and engaging way.

@@ -1,0 +1,4 @@
+project_id  = "YOUR_PROJECT_ID"
+region      = "us-central1"
+zone        = "us-central1-a"
+db_password = "CHANGE_ME_IN_PRODUCTION"

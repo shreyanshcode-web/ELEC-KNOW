@@ -1,21 +1,43 @@
+# ============================================================
+# Cloud Build CI/CD Pipeline
+# Triggered automatically on git push to main branch.
+#
+# Pipeline:
+#   1. Install + Lint
+#   2. Run Tests
+#   3. Build API Docker image
+#   4. Build Worker Docker image
+#   5. Push to Artifact Registry
+#   6. Deploy to GKE
+#   7. Run database migrations
+#
+# Setup:
+#   gcloud builds triggers create github \
+#     --repo-name=ELEC-KNOW \
+#     --branch-pattern="^main$" \
+#     --build-config=submission/cloudbuild.yaml
+# ============================================================
+
 steps:
-  # Step 1: Install dependencies and run linter
-  - name: 'node:20'
-    entrypoint: 'bash'
+  # Step 1: Install & Lint
+  - name: 'node:20-alpine'
+    entrypoint: 'sh'
     args:
       - '-c'
       - 'npm ci && npm run lint'
     id: 'Lint'
+    dir: 'submission'
 
-  # Step 2: Run tests
-  - name: 'node:20'
-    entrypoint: 'bash'
+  # Step 2: Run Tests
+  - name: 'node:20-alpine'
+    entrypoint: 'sh'
     args:
       - '-c'
       - 'npm ci && npm test'
     id: 'Test'
+    dir: 'submission'
 
-  # Step 3: Build API container image
+  # Step 3: Build API Docker Image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -24,11 +46,12 @@ steps:
       - '-t'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api:latest'
       - '-f'
-      - 'docker/Dockerfile.api'
-      - '.'
+      - 'submission/docker/Dockerfile.api'
+      - 'submission/'
     id: 'Build-API'
+    waitFor: ['Lint', 'Test']
 
-  # Step 4: Build Worker container image
+  # Step 4: Build Worker Docker Image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -37,38 +60,65 @@ steps:
       - '-t'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker:latest'
       - '-f'
-      - 'docker/Dockerfile.worker'
-      - '.'
+      - 'submission/docker/Dockerfile.worker'
+      - 'submission/'
     id: 'Build-Worker'
+    waitFor: ['Lint', 'Test']
 
-  # Step 5: Push API image to Artifact Registry
+  # Step 5: Push API Image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api'
+    args: ['push', '--all-tags', '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api']
     id: 'Push-API'
     waitFor: ['Build-API']
 
-  # Step 6: Push Worker image to Artifact Registry
+  # Step 6: Push Worker Image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker'
+    args: ['push', '--all-tags', '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker']
     id: 'Push-Worker'
     waitFor: ['Build-Worker']
 
-  # Step 7: Deploy to GKE
+  # Step 7: Update image tags in K8s manifests
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        sed -i "s|REGION-docker.pkg.dev/PROJECT_ID/election-registry|${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry|g" \
+          submission/k8s/api-deployment.yaml submission/k8s/worker-deployment.yaml
+        sed -i "s|PROJECT_ID:REGION:election-db|$PROJECT_ID:${_REGION}:election-db|g" \
+          submission/k8s/api-deployment.yaml submission/k8s/worker-deployment.yaml
+        sed -i "s|:latest|:$SHORT_SHA|g" \
+          submission/k8s/api-deployment.yaml submission/k8s/worker-deployment.yaml
+    id: 'Patch-Manifests'
+    waitFor: ['Push-API', 'Push-Worker']
+
+  # Step 8: Deploy to GKE
   - name: 'gcr.io/cloud-builders/gke-deploy'
     args:
       - 'run'
-      - '--filename=k8s/'
+      - '--filename=submission/k8s/'
       - '--cluster=${_GKE_CLUSTER}'
       - '--location=${_GKE_ZONE}'
       - '--project=$PROJECT_ID'
     id: 'Deploy-GKE'
-    waitFor: ['Push-API', 'Push-Worker']
+    waitFor: ['Patch-Manifests']
+
+  # Step 9: Run database migrations as a K8s Job
+  - name: 'gcr.io/cloud-builders/kubectl'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud container clusters get-credentials ${_GKE_CLUSTER} \
+          --zone=${_GKE_ZONE} --project=$PROJECT_ID
+        kubectl run db-migrate-$SHORT_SHA \
+          --namespace=election-education \
+          --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api:$SHORT_SHA \
+          --restart=Never \
+          --rm -i \
+          --command -- node src/db/migrate.js
+    id: 'Migrate-DB'
+    waitFor: ['Deploy-GKE']
 
 substitutions:
   _REGION: us-central1
@@ -78,3 +128,11 @@ substitutions:
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: 'E2_HIGHCPU_8'
+  dynamic_substitutions: true
+
+# Artifact images to be pushed
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-api:latest'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker:$SHORT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/election-registry/election-worker:latest'

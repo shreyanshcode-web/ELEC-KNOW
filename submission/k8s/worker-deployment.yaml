@@ -24,8 +24,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: election-config
-            - secretRef:
-                name: election-secrets
           resources:
             requests:
               cpu: "200m"

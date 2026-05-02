@@ -25,6 +25,12 @@ export const requireAuth = async (req, res, next) => {
     return next();
   }
 
+  // Allow mock token in local development
+  if (process.env.NODE_ENV === 'development' && authHeader === 'Bearer mock_jwt_for_development') {
+    req.user = { uid: 'dev-user', email: 'dev@example.com' };
+    return next();
+  }
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized: Missing or invalid authorization header.' });
   }

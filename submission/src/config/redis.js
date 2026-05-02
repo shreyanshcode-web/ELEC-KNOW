@@ -1,64 +1,120 @@
 import { createClient } from 'redis';
+import logger from './logger.js';
 
 /**
- * Redis client wrapper for caching layer.
- * Connects to Google Memorystore (production) or local Redis (development).
+ * Redis client for caching and rate limiting.
+ *
+ * GCP deployment:
+ * - Production: Google Memorystore for Redis (managed)
+ * - GKE: in-cluster Redis pod or Memorystore private IP
+ * - Local dev: Docker Compose Redis container
+ *
+ * Graceful degradation: if Redis is unavailable, the app continues
+ * without caching (every request goes to Gemini). Rate limiting
+ * falls back to in-memory.
+ *
  * @module config/redis
  */
 
 /** @type {import('redis').RedisClientType|null} */
 let client = null;
+let redisAvailable = false;
+let connectionFailed = false;
+
+/**
+ * Returns whether Redis is currently connected.
+ * @returns {boolean}
+ */
+export const isRedisAvailable = () => redisAvailable;
 
 /**
  * Returns the shared Redis client. Creates and connects on first call.
- * @returns {Promise<import('redis').RedisClientType>} Connected Redis client.
+ * If Redis is unavailable, returns null (caller must handle gracefully).
+ * @returns {Promise<import('redis').RedisClientType|null>} Connected client or null.
  */
 export const getRedisClient = async () => {
   if (client && client.isOpen) {
     return client;
   }
 
-  const redisUrl = process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || '127.0.0.1'}:${process.env.REDIS_PORT || '6379'}`;
+  // Fast-fail if we've already determined Redis is offline
+  if (connectionFailed) {
+    return null;
+  }
 
-  client = createClient({
-    url: redisUrl,
-    password: process.env.REDIS_PASSWORD || undefined,
-    socket: {
-      connectTimeout: 5000,
-      reconnectStrategy: (retries) => {
-        if (retries > 10) {
-          console.error('Redis: max reconnect attempts reached');
-          return new Error('Redis max reconnect attempts reached');
-        }
-        // Exponential backoff: 100ms, 200ms, 400ms... up to 3s
-        return Math.min(retries * 100, 3000);
+  const redisUrl = process.env.REDIS_URL
+    || `redis://${process.env.REDIS_HOST || '127.0.0.1'}:${process.env.REDIS_PORT || '6379'}`;
+
+  try {
+    client = createClient({
+      url: redisUrl,
+      password: process.env.REDIS_PASSWORD || undefined,
+      socket: {
+        connectTimeout: 2000,
+        reconnectStrategy: (retries) => {
+          if (retries > 2) {
+            logger.warn('Redis: connection failed completely — disabling cache');
+            redisAvailable = false;
+            connectionFailed = true;
+            return false; // Stop reconnecting
+          }
+          return 500;
+        },
       },
-    },
-  });
+    });
 
-  client.on('error', (err) => {
-    console.error('Redis client error:', err.message);
-  });
+    client.on('error', (err) => {
+      redisAvailable = false;
+    });
 
-  client.on('connect', () => {
-    console.log('Redis: connected');
-  });
+    client.on('connect', () => {
+      redisAvailable = true;
+      connectionFailed = false;
+      logger.info('Redis: connected');
+    });
 
-  client.on('reconnecting', () => {
-    console.warn('Redis: reconnecting...');
-  });
+    client.on('end', () => {
+      redisAvailable = false;
+    });
 
-  await client.connect();
-  return client;
+    await client.connect();
+    redisAvailable = true;
+    return client;
+  } catch (err) {
+    redisAvailable = false;
+    connectionFailed = true;
+    logger.warn('Redis connection failed — app will run without cache');
+    return null;
+  }
 };
 
 /**
- * Gracefully disconnects the Redis client. Call during shutdown.
+ * Pings Redis to check availability. Used by readiness probes.
+ * @returns {Promise<boolean>} True if Redis responds, false otherwise.
+ */
+export const testRedis = async () => {
+  try {
+    if (!client || !client.isOpen) {
+      return false;
+    }
+    await client.ping();
+    redisAvailable = true;
+    return true;
+  } catch {
+    redisAvailable = false;
+    return false;
+  }
+};
+
+/**
+ * Gracefully disconnects the Redis client.
  * @returns {Promise<void>}
  */
 export const closeRedis = async () => {
   if (client && client.isOpen) {
     await client.quit();
     client = null;
+    redisAvailable = false;
+    logger.info('Redis: disconnected');
   }
 };
