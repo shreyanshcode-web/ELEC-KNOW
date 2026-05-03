@@ -104,9 +104,9 @@ export default function CopilotPanel() {
   };
 
   return (
-    <aside id="copilot-panel" className="px-4 pb-16 pt-14 sm:px-6 lg:px-8 xl:px-0 xl:pb-0 xl:pt-6">
-      <div className="xl:sticky xl:top-6">
-        <section className="panel relative flex min-h-[640px] flex-col overflow-hidden rounded-[32px]">
+    <aside id="copilot-panel" className="px-4 pb-16 sm:px-6 lg:px-8 xl:px-0 xl:pb-0">
+      <div className="xl:sticky xl:top-6 h-[calc(100vh-3rem)]">
+        <section className="panel relative flex h-full flex-col overflow-hidden rounded-[32px]">
           <div className="copilot-mesh absolute inset-0 opacity-80" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.75),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(15,118,110,0.08),_transparent_32%)]" />
 

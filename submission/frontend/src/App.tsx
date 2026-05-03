@@ -13,7 +13,7 @@ import PollingLocator from './components/PollingLocator';
 
 export default function App() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-canvas text-slate-900 selection:bg-primary/15 selection:text-slate-950">
+    <div className="min-h-screen overflow-x-clip bg-canvas text-slate-900 selection:bg-primary/15 selection:text-slate-950">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(212,122,58,0.14),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(15,118,110,0.12),_transparent_28%)]" />
       <div className="soft-grid pointer-events-none fixed inset-0 opacity-50" />
 
