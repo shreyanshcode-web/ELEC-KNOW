@@ -26,6 +26,8 @@
 ## 🌟 Key Features
 
 *   🤖 **Gemini-Powered Guidance**: Context-aware, politically neutral AI that explains complex civic duties in simple terms.
+*   🌍 **Native Multilingual Support**: Instant full-site translation for 12+ official regional Indian languages (Hindi, Bengali, Tamil, etc.) powered by Google Translate DOM integration.
+*   🔐 **Google Authentication**: Secure OAuth 2.0 implementation using `@react-oauth/google` and native GCP JWT verification.
 *   🔒 **Enterprise Security**: Strict CSP, XSS sanitization, CORS protection, and secure secret management via GCP.
 *   ⚡ **Resilient Architecture**: "Lazy-load" microservices design. Gracefully degrades if external services (PostgreSQL, Redis, Kafka) are unavailable.
 *   📊 **Real-time Insights**: Integrates with official ECI data and data.gov.in for verified polling station and timeline information.
@@ -120,6 +122,7 @@ Targeting a **99% Production Readiness Score**, this codebase has undergone rigo
 *   ✅ **100% Test Pass Rate**: 23 unit tests & 10 integration tests ensuring rock-solid core logic.
 *   ✅ **Hardened Middleware**: Helmet-enforced Content Security Policies (CSP), strict origin-checking CORS, and rate limiting.
 *   ✅ **Input Validation**: Custom EPIC (Voter ID) format validation and comprehensive XSS sanitization.
+*   ✅ **Layout Resilience**: Bulletproof sticky-grid CSS architecture that prevents content overflow across 4K displays and standard viewports.
 
 <br />
 <div align="center">
