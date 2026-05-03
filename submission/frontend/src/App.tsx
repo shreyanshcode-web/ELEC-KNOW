@@ -29,10 +29,10 @@ export default function App() {
                 <Route path="/timeline" element={<TimelinePage />} />
               </Routes>
 
-              <footer className="mt-16 border-t border-slate-200/70 pt-8 text-sm text-slate-500">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p>&copy; 2026 Election Copilot Platform. Calm, visual civic education for every voter.</p>
-                  <p>Designed for clarity, neutrality, and faster understanding.</p>
+              <footer className="mt-16 border-t border-slate-200/70 pt-8 text-sm text-slate-600 sm:mt-20 sm:pt-10">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="font-medium text-slate-700">&copy; 2026 Election Copilot Platform. Calm, visual civic education for every voter.</p>
+                  <p className="text-slate-500">Designed for clarity, neutrality, and faster understanding.</p>
                 </div>
               </footer>
             </div>

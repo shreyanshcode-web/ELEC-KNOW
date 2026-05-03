@@ -98,6 +98,36 @@ body {
 .goog-tooltip:hover {
   display: none !important;
 }
+
+/* Footer Styling */
+footer {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%);
+  border-top: 1.5px solid rgba(100, 116, 139, 0.15);
+  padding-top: 2rem;
+  margin-top: 4rem;
+}
+
+footer p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+  }
+
+  footer p {
+    font-size: 0.8125rem;
+  }
+
+  footer div {
+    gap: 1rem !important;
+  }
+}
 .goog-text-highlight {
   background-color: transparent !important;
   border: none !important;
