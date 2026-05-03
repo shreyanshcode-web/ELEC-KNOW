@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowUpRight, Search, ShieldCheck, Sparkles, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowUpRight, Search, ShieldCheck, Sparkles, LogOut, Globe } from 'lucide-react';
 import { GoogleLogin, googleLogout, CredentialResponse } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 
@@ -9,6 +9,22 @@ interface GoogleUser {
   email: string;
 }
 
+const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'हिन्दी (Hindi)' },
+  { code: 'bn', label: 'বাংলা (Bengali)' },
+  { code: 'te', label: 'తెలుగు (Telugu)' },
+  { code: 'mr', label: 'मराठी (Marathi)' },
+  { code: 'ta', label: 'தமிழ் (Tamil)' },
+  { code: 'gu', label: 'ગુજરાતી (Gujarati)' },
+  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
+  { code: 'ml', label: 'മലയാളം (Malayalam)' },
+  { code: 'or', label: 'ଓଡ଼ିଆ (Odia)' },
+  { code: 'pa', label: 'ਪੰਜਾਬੀ (Punjabi)' },
+  { code: 'as', label: 'অসমীয়া (Assamese)' },
+  { code: 'ur', label: 'اردو (Urdu)' }
+];
+
 const browseLinks = [
   { href: '#quick-actions', label: 'Voting guide' },
   { href: '#election-timeline', label: 'Timeline' },
@@ -17,6 +33,20 @@ const browseLinks = [
 
 export default function TopBar() {
   const [user, setUser] = useState<GoogleUser | null>(null);
+  const [currentLang, setCurrentLang] = useState('en');
+
+  // Sync Google Translate when currentLang changes
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value;
+    setCurrentLang(lang);
+    
+    // Find the hidden Google Translate select and trigger it
+    const translateSelect = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+    if (translateSelect) {
+      translateSelect.value = lang;
+      translateSelect.dispatchEvent(new Event('change'));
+    }
+  };
 
   const handleLoginSuccess = (credentialResponse: CredentialResponse) => {
     if (credentialResponse.credential) {
@@ -66,6 +96,24 @@ export default function TopBar() {
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
+            <div className="relative group flex items-center">
+              <Globe size={18} className="absolute left-3 text-slate-500 pointer-events-none group-focus-within:text-primary transition-colors" />
+              <select
+                value={currentLang}
+                onChange={handleLanguageChange}
+                className="h-10 pl-9 pr-8 rounded-2xl border border-slate-200 bg-white/90 text-sm font-medium text-slate-700 outline-none transition focus:border-primary/25 focus:ring-4 focus:ring-primary/10 appearance-none cursor-pointer hover:border-slate-300"
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>{l.label}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 pointer-events-none text-slate-400">
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+
             {user ? (
               <div className="flex items-center gap-3 rounded-2xl bg-white/80 pl-2 pr-4 py-1.5 border border-slate-200 shadow-sm">
                 <img src={user.picture} alt={user.name} className="h-8 w-8 rounded-full border border-slate-200" />
