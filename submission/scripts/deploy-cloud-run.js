@@ -221,6 +221,40 @@ const ensureArtifactRepository = ({ projectId, region, repository }) => {
   ]);
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const bindIamRole = ({ projectId, email, role, maxRetries = 4 }) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const result = spawnSync(GCLOUD, [
+      'projects',
+      'add-iam-policy-binding',
+      projectId,
+      '--member',
+      `serviceAccount:${email}`,
+      '--role',
+      role,
+      '--quiet',
+    ], {
+      cwd: rootDir,
+      shell: false,
+      stdio: 'inherit',
+      windowsHide: true,
+    });
+
+    if (!result.error && result.status === 0) return;
+
+    if (attempt < maxRetries) {
+      log(`  IAM binding attempt ${attempt} failed — retrying in 10s (GCP propagation delay)...`);
+      spawnSync(process.platform === 'win32' ? 'timeout' : 'sleep', 
+        process.platform === 'win32' ? ['/t', '10', '/nobreak'] : ['10'],
+        { stdio: 'ignore', shell: true }
+      );
+    } else {
+      fail(`Could not bind ${role} to ${email} after ${maxRetries} attempts.`);
+    }
+  }
+};
+
 const ensureServiceAccount = ({ projectId, accountName }) => {
   const providedEmail = firstValid(process.env.CLOUD_RUN_SERVICE_ACCOUNT_EMAIL);
   if (providedEmail) {
@@ -229,6 +263,8 @@ const ensureServiceAccount = ({ projectId, accountName }) => {
   }
 
   const email = `${accountName}@${projectId}.iam.gserviceaccount.com`;
+  let justCreated = false;
+
   if (!succeeds(GCLOUD, [
     'iam',
     'service-accounts',
@@ -248,21 +284,18 @@ const ensureServiceAccount = ({ projectId, accountName }) => {
       projectId,
       '--quiet',
     ]);
+    justCreated = true;
+    log('Waiting 15s for service account to propagate...');
+    spawnSync(process.platform === 'win32' ? 'timeout' : 'sleep',
+      process.platform === 'win32' ? ['/t', '15', '/nobreak'] : ['15'],
+      { stdio: 'ignore', shell: true }
+    );
   } else {
     log(`Cloud Run service account ready: ${email}`);
   }
 
   for (const role of ['roles/secretmanager.secretAccessor', 'roles/cloudsql.client']) {
-    run(GCLOUD, [
-      'projects',
-      'add-iam-policy-binding',
-      projectId,
-      '--member',
-      `serviceAccount:${email}`,
-      '--role',
-      role,
-      '--quiet',
-    ]);
+    bindIamRole({ projectId, email, role, maxRetries: justCreated ? 4 : 2 });
   }
 
   return email;
@@ -413,9 +446,11 @@ const main = () => {
     projectId,
     envKey: 'GEMINI_API_KEY',
     secretName: 'gemini-api-key',
-    required: true,
+    required: false,
   })) {
     secretEnvVars.GEMINI_API_KEY = 'gemini-api-key:latest';
+  } else {
+    log('Note: GEMINI_API_KEY not configured — AI Copilot will be disabled until you add it to Secret Manager.');
   }
 
   const optionalSecrets = [
