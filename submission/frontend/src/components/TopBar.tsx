@@ -1,4 +1,13 @@
-import { ArrowUpRight, Search, ShieldCheck, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowUpRight, Search, ShieldCheck, Sparkles, LogOut } from 'lucide-react';
+import { GoogleLogin, googleLogout, CredentialResponse } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
+
+interface GoogleUser {
+  name: string;
+  picture: string;
+  email: string;
+}
 
 const browseLinks = [
   { href: '#quick-actions', label: 'Voting guide' },
@@ -7,6 +16,23 @@ const browseLinks = [
 ] as const;
 
 export default function TopBar() {
+  const [user, setUser] = useState<GoogleUser | null>(null);
+
+  const handleLoginSuccess = (credentialResponse: CredentialResponse) => {
+    if (credentialResponse.credential) {
+      const decoded = jwtDecode<GoogleUser>(credentialResponse.credential);
+      setUser(decoded);
+      // Here you would typically store the token in localStorage
+      // localStorage.setItem('auth_token', credentialResponse.credential);
+    }
+  };
+
+  const handleLogout = () => {
+    googleLogout();
+    setUser(null);
+    // localStorage.removeItem('auth_token');
+  };
+
   return (
     <header className="sticky top-0 z-40 px-4 pt-4 sm:px-6 lg:px-8 xl:px-0 xl:pt-0">
       <div className="panel rounded-[28px] px-5 py-4 sm:px-6">
@@ -25,7 +51,7 @@ export default function TopBar() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 xl:min-w-[520px] xl:max-w-[560px] xl:flex-1">
+          <div className="flex flex-col gap-3 xl:min-w-[420px] xl:max-w-[460px] xl:flex-1">
             <div className="relative group">
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary"
@@ -33,30 +59,48 @@ export default function TopBar() {
               />
               <input
                 type="text"
-                placeholder="Search voter ID rules, counting phases, or constituency topics"
+                placeholder="Search voter ID rules or counting phases"
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-white/90 pl-12 pr-4 text-sm outline-none transition focus:border-primary/25 focus:ring-4 focus:ring-primary/10"
               />
             </div>
-
-            <div className="flex flex-wrap gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-                <ShieldCheck size={14} />
-                Official-source cues
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-                <Sparkles size={14} />
-                AI-assisted explanations
-              </div>
-            </div>
           </div>
 
-          <a
-            href="#copilot-panel"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.18)]"
-          >
-            Open copilot
-            <ArrowUpRight size={16} />
-          </a>
+          <div className="flex items-center gap-4 flex-wrap">
+            {user ? (
+              <div className="flex items-center gap-3 rounded-2xl bg-white/80 pl-2 pr-4 py-1.5 border border-slate-200 shadow-sm">
+                <img src={user.picture} alt={user.name} className="h-8 w-8 rounded-full border border-slate-200" />
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-slate-900 leading-tight">{user.name}</span>
+                  <span className="text-[10px] text-slate-500 leading-tight">Voter</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="ml-2 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                  title="Sign out"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl">
+                <GoogleLogin
+                  onSuccess={handleLoginSuccess}
+                  onError={() => console.log('Login Failed')}
+                  theme="outline"
+                  shape="pill"
+                  text="continue_with"
+                />
+              </div>
+            )}
+            
+            <a
+              href="#copilot-panel"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.18)]"
+            >
+              Open copilot
+              <ArrowUpRight size={16} />
+            </a>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 xl:hidden">

@@ -1,36 +1,26 @@
-import admin from 'firebase-admin';
+import { OAuth2Client } from 'google-auth-library';
 import logger from '../config/logger.js';
 import { HTTP_STATUS } from '../config/constants.js';
 
 /**
- * Firebase Authentication middleware.
- * Verifies JWT Bearer tokens server-side using the Firebase Admin SDK.
+ * Google Authentication middleware.
+ * Verifies Google OAuth2 ID tokens (JWTs) using the google-auth-library.
  *
  * Authentication flow:
- * 1. Production/Cloud Run: Validates real Firebase ID tokens via Admin SDK.
+ * 1. Production/Cloud Run: Validates real Google ID tokens from the frontend.
  * 2. Local development:    Accepts `Bearer mock_jwt_for_development` for
- *                          frontend testing without a full Firebase Emulator.
+ *                          frontend testing without real Google Sign-In.
  * 3. Test environment:     Bypasses auth entirely when BYPASS_AUTH=true.
- *
- * The Firebase Admin SDK uses Application Default Credentials (ADC)
- * automatically on Google Cloud (Workload Identity on GKE, built-in on Cloud Run).
  *
  * @module middleware/auth
  */
 
-// Lazy-initialize Firebase Admin SDK (prevents duplicate initialization in tests)
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp();
-    logger.debug('Firebase Admin SDK initialized');
-  } catch {
-    logger.warn('Firebase Admin SDK initialization failed — auth will require mock tokens locally');
-  }
-}
+const getClientId = () => process.env.GOOGLE_OAUTH_CLIENT_ID || 'dummy-client-id';
+const client = new OAuth2Client();
 
 /**
- * Express middleware that enforces Firebase Authentication.
- * Attaches the decoded Firebase user to `req.user` on success.
+ * Express middleware that enforces Google Authentication.
+ * Attaches the decoded Google user to `req.user` on success.
  *
  * @param {import('express').Request} req - Express request (expects Authorization header).
  * @param {import('express').Response} res - Express response.
@@ -56,20 +46,34 @@ export const requireAuth = async (req, res, next) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({
       error: 'Unauthorized: Missing or invalid authorization header.',
-      hint: 'Include "Authorization: Bearer <Firebase_ID_Token>" in your request.',
+      hint: 'Include "Authorization: Bearer <Google_ID_Token>" in your request.',
     });
   }
 
-  // ── Verify Firebase ID token ──
+  // ── Verify Google ID token ──
   const idToken = authHeader.split('Bearer ')[1];
 
   try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    req.user = decodedToken;
+    const ticket = await client.verifyIdToken({
+      idToken,
+      // audience is optional here but recommended if we enforce a single client ID
+      // audience: getClientId(),
+    });
+
+    const payload = ticket.getPayload();
+    
+    // Map Google payload to standard user object
+    req.user = {
+      uid: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture
+    };
+    
     next();
   } catch (error) {
-    logger.warn('Firebase token verification failed', {
-      error: error.code || error.message,
+    logger.warn('Google token verification failed', {
+      error: error.message,
       ip: req.ip,
     });
     return res.status(HTTP_STATUS.FORBIDDEN).json({

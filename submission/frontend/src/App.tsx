@@ -17,7 +17,7 @@ export default function App() {
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(212,122,58,0.14),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(15,118,110,0.12),_transparent_28%)]" />
       <div className="soft-grid pointer-events-none fixed inset-0 opacity-50" />
 
-      <div className="relative mx-auto max-w-[1680px] xl:grid xl:grid-cols-[92px,minmax(0,1fr),380px] xl:gap-6 xl:px-6 xl:py-6">
+      <div className="relative mx-auto max-w-[1680px] xl:grid xl:grid-cols-[92px_minmax(0,1fr)_380px] xl:gap-6 xl:px-6 xl:py-6">
         {/* Navigation */}
         <Sidebar />
 
