@@ -1,15 +1,21 @@
-import { BarChart3, BookOpen, CalendarDays, LayoutDashboard, Map, ShieldCheck } from 'lucide-react';
+import { BarChart3, BookOpen, CalendarDays, LayoutDashboard, Map, ShieldCheck, Users2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
-  { href: '#overview', icon: LayoutDashboard, id: 'overview', label: 'Overview' },
-  { href: '#quick-actions', icon: BookOpen, id: 'quick-actions', label: 'Guides' },
-  { href: '#election-timeline', icon: CalendarDays, id: 'timeline', label: 'Timeline' },
-  { href: '#polling-locator', icon: Map, id: 'locator', label: 'Locator' },
-  { href: '#copilot-panel', icon: BarChart3, id: 'copilot', label: 'Copilot' },
+  { href: '/', icon: LayoutDashboard, id: 'overview', label: 'Overview' },
+  { href: '/timeline', icon: CalendarDays, id: 'timeline', label: 'Timeline' },
+  { href: '/candidates', icon: Users2, id: 'candidates', label: 'Candidates' },
+  { href: '/#polling-locator', icon: Map, id: 'locator', label: 'Locator' },
+  { href: '/#quick-actions', icon: BookOpen, id: 'quick-actions', label: 'Guides' },
+  { href: '/#copilot-panel', icon: BarChart3, id: 'copilot', label: 'Copilot' },
 ] as const;
 
+const MotionLink = motion(Link);
+
 export default function Sidebar() {
+  const location = useLocation();
+
   return (
     <aside className="hidden xl:block">
       <div className="sticky top-6 h-[calc(100vh-3rem)]">
@@ -27,19 +33,31 @@ export default function Sidebar() {
           </div>
 
           <nav className="flex flex-1 flex-col gap-2">
-            {navItems.map((item) => (
-              <motion.a
-                key={item.id}
-                href={item.href}
-                whileHover={{ x: 4 }}
-                className="group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-600 transition-colors hover:bg-white/90 hover:text-slate-950"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 text-slate-700 ring-1 ring-slate-200 transition-colors group-hover:bg-slate-950 group-hover:text-white">
-                  <item.icon size={18} />
-                </div>
-                <span className="font-medium">{item.label}</span>
-              </motion.a>
-            ))}
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.href || location.pathname + location.hash === item.href;
+              
+              return (
+                <MotionLink
+                  key={item.id}
+                  to={item.href}
+                  whileHover={{ x: 4 }}
+                  className={`group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-colors ${
+                    isActive 
+                      ? 'bg-slate-950 text-white shadow-[0_10px_20px_rgba(15,23,42,0.12)]' 
+                      : 'text-slate-600 hover:bg-white/90 hover:text-slate-950'
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-colors ${
+                    isActive
+                      ? 'bg-white/10 text-white'
+                      : 'bg-white/70 text-slate-700 ring-1 ring-slate-200 group-hover:bg-slate-950 group-hover:text-white'
+                  }`}>
+                    <item.icon size={18} />
+                  </div>
+                  <span className="font-medium">{item.label}</span>
+                </MotionLink>
+              );
+            })}
           </nav>
 
           <div className="mt-6 rounded-[28px] bg-slate-950 px-4 py-5 text-white shadow-[0_20px_45px_rgba(15,23,42,0.18)]">
