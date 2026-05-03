@@ -134,7 +134,10 @@ export default function TopBar() {
               <div className="overflow-hidden rounded-2xl">
                 <GoogleLogin
                   onSuccess={handleLoginSuccess}
-                  onError={() => console.log('Login Failed')}
+                  onError={() => {
+                    // In a production app, trigger a toast notification here
+                    console.error('Google OAuth Authentication Failed');
+                  }}
                   theme="outline"
                   shape="pill"
                   text="continue_with"

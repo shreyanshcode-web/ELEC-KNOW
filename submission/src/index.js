@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { setupRoutes } from './routes.js';
-import { errorHandler } from './middleware/error.js';
+import { errorHandler, notFoundHandler } from './middleware/error.js';
 import { apiRateLimiter } from './middleware/rateLimit.js';
 import { closePool, testConnection } from './config/database.js';
 import { closeRedis, getRedisClient } from './config/redis.js';
@@ -83,6 +83,10 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+// 404 handler for API routes (must be before error handler)
+app.use(notFoundHandler);
+
+// Global error handler (must be last)
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;

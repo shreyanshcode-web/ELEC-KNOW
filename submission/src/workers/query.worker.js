@@ -45,9 +45,9 @@ const handleQuerySubmitted = async (event) => {
       await incrementQueryCount(event.data.topicId);
     }
 
-    console.log(`Worker: processed QUERY_SUBMITTED (query=${queryId})`);
+    logger.info(`Worker: processed QUERY_SUBMITTED (query=${queryId})`);
   } catch (error) {
-    console.error(`Worker: failed to process QUERY_SUBMITTED (query=${queryId}):`, error.message);
+    logger.error(`Worker: failed to process QUERY_SUBMITTED (query=${queryId}):`, { error: error.message });
   }
 };
 
@@ -67,9 +67,9 @@ const handleAnalyticsUpdate = async (event) => {
       metadata: event.data.metadata || {},
     });
 
-    console.log(`Worker: processed ANALYTICS_UPDATE (query=${queryId})`);
+    logger.info(`Worker: processed ANALYTICS_UPDATE (query=${queryId})`);
   } catch (error) {
-    console.error(`Worker: failed to process ANALYTICS_UPDATE:`, error.message);
+    logger.error(`Worker: failed to process ANALYTICS_UPDATE:`, { error: error.message });
   }
 };
 
@@ -81,7 +81,7 @@ const startWorker = async () => {
   const consumer = createConsumer(CONSUMER_GROUP);
 
   await consumer.connect();
-  console.log(`Worker: connected to Kafka (group=${CONSUMER_GROUP})`);
+  logger.info(`Worker: connected to Kafka (group=${CONSUMER_GROUP})`);
 
   // Subscribe to all relevant topics
   await consumer.subscribe({
@@ -102,17 +102,17 @@ const startWorker = async () => {
             await handleAnalyticsUpdate(event);
             break;
           default:
-            console.warn(`Worker: unknown event type: ${event.eventType}`);
+            logger.warn(`Worker: unknown event type: ${event.eventType}`);
         }
       } catch (error) {
-        console.error(`Worker: message processing error (topic=${topic}, partition=${partition}):`, error.message);
+        logger.error(`Worker: message processing error (topic=${topic}, partition=${partition}):`, { error: error.message });
       }
     },
   });
 
   // Graceful shutdown handlers
   const shutdown = async () => {
-    console.log('Worker: shutting down gracefully...');
+    logger.info('Worker: shutting down gracefully...');
     await consumer.disconnect();
     process.exit(0);
   };
@@ -120,11 +120,11 @@ const startWorker = async () => {
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
 
-  console.log('Worker: listening for events...');
+  logger.info('Worker: listening for events...');
 };
 
 // Boot the worker
 startWorker().catch((err) => {
-  console.error('Worker: failed to start:', err);
+  logger.error('Worker: failed to start:', { error: err.message });
   process.exit(1);
 });

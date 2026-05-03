@@ -1,21 +1,14 @@
-import { KNOWLEDGE_LEVELS, MAX_QUERY_LENGTH, HTTP_STATUS } from '../config/constants.js';
+import { KNOWLEDGE_LEVELS, MAX_QUERY_LENGTH } from '../config/constants.js';
+import { validateString, validateEpic, validateChoice } from '../utils/validation.js';
+import { sendValidationError } from '../utils/response.js';
 
 /**
  * Input validation and sanitization middleware.
  * Defends against XSS, SQL injection payloads, and oversized inputs.
- * All user-facing strings are trimmed, length-limited, and stripped of
- * dangerous patterns before reaching any downstream service.
+ * All user-facing strings are validated, sanitized, and type-checked
+ * before reaching any downstream service.
  * @module middleware/validation
  */
-
-/**
- * Strips potentially dangerous HTML/script tags from user input.
- * Defence-in-depth layer on top of parameterized queries and CSP headers.
- * @param {string} input - Raw user input string.
- * @returns {string} Sanitized string with tags removed.
- */
-const sanitizeInput = (input) =>
-  input.replace(/<[^>]*>/g, '').replace(/[<>]/g, '');
 
 /**
  * Validates and sanitizes the POST /api/education request body.
@@ -31,40 +24,40 @@ const sanitizeInput = (input) =>
  * @returns {void}
  */
 export const validateQuery = (req, res, next) => {
-  const { query, knowledgeLevel } = req.body;
+  try {
+    const { query, knowledgeLevel } = req.body;
 
-  // ── Query presence check ────────────────────────────
-  if (!query || typeof query !== 'string') {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Query is missing or invalid.',
-      hint: 'Provide a non-empty string in the "query" field.',
-    });
+    // ── Query validation ────────────────────────────────
+    if (!query || typeof query !== 'string') {
+      return sendValidationError(res, 'Query is missing or invalid.', {
+        field: 'query',
+        hint: 'Provide a non-empty string in the "query" field.',
+      });
+    }
+
+    // ── Sanitize & validate ────────────────────────────
+    const sanitizedQuery = validateString(query, { maxLength: MAX_QUERY_LENGTH });
+    req.body.query = sanitizedQuery;
+
+    // ── Knowledge level validation ──────────────────────
+    if (knowledgeLevel) {
+      try {
+        req.body.knowledgeLevel = validateChoice(knowledgeLevel, KNOWLEDGE_LEVELS, 'knowledgeLevel');
+      } catch (err) {
+        return sendValidationError(res, err.message, {
+          field: 'knowledgeLevel',
+          allowed: KNOWLEDGE_LEVELS,
+        });
+      }
+    } else {
+      // Default to Beginner if not provided
+      req.body.knowledgeLevel = KNOWLEDGE_LEVELS[0];
+    }
+
+    next();
+  } catch (err) {
+    return sendValidationError(res, err.message, { error: err.context });
   }
-
-  // ── Sanitize: trim → strip HTML → enforce max length ──
-  const sanitizedQuery = sanitizeInput(query.trim()).substring(0, MAX_QUERY_LENGTH);
-  if (sanitizedQuery.length === 0) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Query cannot be empty after sanitization.',
-    });
-  }
-
-  req.body.query = sanitizedQuery;
-
-  // ── Knowledge level validation ──────────────────────
-  if (knowledgeLevel && !KNOWLEDGE_LEVELS.includes(knowledgeLevel)) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Invalid knowledge level.',
-      hint: `Valid levels: ${KNOWLEDGE_LEVELS.join(', ')}`,
-    });
-  }
-
-  // Default to Beginner if not provided
-  if (!knowledgeLevel) {
-    req.body.knowledgeLevel = KNOWLEDGE_LEVELS[0];
-  }
-
-  next();
 };
 
 /**
@@ -78,24 +71,24 @@ export const validateQuery = (req, res, next) => {
  * @returns {void}
  */
 export const validateEpicNumber = (req, res, next) => {
-  const { epicNumber } = req.params;
+  try {
+    const { epicNumber } = req.params;
 
-  if (!epicNumber || typeof epicNumber !== 'string') {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'EPIC number is required.',
+    if (!epicNumber || typeof epicNumber !== 'string') {
+      return sendValidationError(res, 'EPIC number is required.', {
+        field: 'epicNumber',
+        hint: 'Provide the EPIC number as a route parameter.',
+      });
+    }
+
+    const validated = validateEpic(epicNumber);
+    req.params.epicNumber = validated;
+
+    next();
+  } catch (err) {
+    return sendValidationError(res, err.message, {
+      field: 'epicNumber',
+      expected: '3 uppercase letters + 7 digits (e.g., ABC1234567)',
     });
   }
-
-  const sanitized = sanitizeInput(epicNumber.trim().toUpperCase());
-  const EPIC_PATTERN = /^[A-Z]{3}\d{7}$/;
-
-  if (!EPIC_PATTERN.test(sanitized)) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Invalid EPIC number format.',
-      hint: 'Expected format: 3 uppercase letters + 7 digits (e.g. ABC1234567).',
-    });
-  }
-
-  req.params.epicNumber = sanitized;
-  next();
 };
