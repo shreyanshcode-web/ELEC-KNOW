@@ -1,16 +1,28 @@
 import axios from 'axios';
 import { getCachedResponse, setCachedResponse } from './cache.service.js';
+import logger from '../config/logger.js';
 
 /**
  * data.gov.in Open Government Data Platform API service.
- * Provides election statistics, schedules, results, and turnout data.
+ * Provides election timelines, schedules, results, and voter turnout
+ * statistics to power the election process education platform.
+ *
+ * Problem Statement Alignment:
+ * Supplies real-world election timelines and data that help users
+ * understand the election process in an interactive way.
+ *
  * Requires a free API key from: https://data.gov.in/
  * @module services/datagov.service
  */
 
 const getDatagovBaseUrl = () => process.env.DATAGOV_BASE_URL || 'https://api.data.gov.in';
 const getDatagovApiKey = () => process.env.DATAGOV_API_KEY;
-const REQUEST_TIMEOUT_MS = 15000;
+
+/** @type {number} Request timeout in milliseconds */
+const REQUEST_TIMEOUT_MS = 15_000;
+
+/** @type {number} Cache TTL: 7 days (election data is static once published) */
+const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 /** Well-known resource UIDs for Lok Sabha 2024 data */
 const RESOURCE_IDS = Object.freeze({
@@ -21,6 +33,7 @@ const RESOURCE_IDS = Object.freeze({
 
 /**
  * Validates that the data.gov.in API key is configured.
+ * @returns {string} The API key.
  * @throws {Error} If DATAGOV_API_KEY is not set.
  */
 const ensureApiKey = () => {
@@ -34,10 +47,10 @@ const ensureApiKey = () => {
 /**
  * Generic data.gov.in resource fetcher with pagination and caching.
  * @param {string} resourceId - The dataset resource UID.
- * @param {object} [filters] - Key-value query filters (e.g. { state_id: '19' }).
+ * @param {object} [filters={}] - Key-value query filters (e.g. { state_id: '19' }).
  * @param {number} [limit=50] - Max records per page (max 250 per data.gov.in).
  * @param {number} [offset=0] - Records to skip for pagination.
- * @returns {Promise<object>} { records, total, count } or error.
+ * @returns {Promise<object>} { records, total, count }.
  */
 const fetchResource = async (resourceId, filters = {}, limit = 50, offset = 0) => {
   const apiKey = ensureApiKey();
@@ -68,14 +81,13 @@ const fetchResource = async (resourceId, filters = {}, limit = 50, offset = 0) =
       count: response.data?.count || 0,
     };
 
-    // Cache for 7 days — election data is static once published
-    await setCachedResponse(cacheKey, 'datagov', JSON.stringify(result), 604800);
+    await setCachedResponse(cacheKey, 'datagov', JSON.stringify(result), CACHE_TTL_SECONDS);
 
     return result;
   } catch (error) {
     const msg = error.response?.data?.message || error.message;
-    console.error(`data.gov.in fetch failed (resource=${resourceId}):`, msg);
-    throw new Error(`Failed to fetch data from data.gov.in: ${msg}`);
+    logger.error('data.gov.in fetch failed', { resourceId, error: msg });
+    throw new Error(`Failed to fetch election data from data.gov.in: ${msg}`);
   }
 };
 
@@ -83,7 +95,7 @@ const fetchResource = async (resourceId, filters = {}, limit = 50, offset = 0) =
  * Fetches voter turnout data, optionally filtered by state.
  * @param {string} [stateId] - Optional state ID filter.
  * @param {number} [limit=50] - Max records.
- * @returns {Promise<object>} Turnout records.
+ * @returns {Promise<object>} Turnout records with total and count.
  */
 export const getVoterTurnout = async (stateId, limit = 50) => {
   const filters = stateId ? { 'filters[state_id]': stateId } : {};
@@ -91,9 +103,9 @@ export const getVoterTurnout = async (stateId, limit = 50) => {
 };
 
 /**
- * Fetches election schedule/phases data.
+ * Fetches election schedule/phases data (timelines).
  * @param {number} [limit=50] - Max records.
- * @returns {Promise<object>} Schedule records.
+ * @returns {Promise<object>} Schedule records with dates and phases.
  */
 export const getElectionSchedule = async (limit = 50) => {
   return fetchResource(RESOURCE_IDS.ELECTION_SCHEDULE, {}, limit);
@@ -103,7 +115,7 @@ export const getElectionSchedule = async (limit = 50) => {
  * Fetches constituency-level election results.
  * @param {string} [constituencyName] - Optional constituency name filter.
  * @param {number} [limit=50] - Max records.
- * @returns {Promise<object>} Results records.
+ * @returns {Promise<object>} Results records with winners and margins.
  */
 export const getConstituencyResults = async (constituencyName, limit = 50) => {
   const filters = constituencyName
@@ -114,9 +126,8 @@ export const getConstituencyResults = async (constituencyName, limit = 50) => {
 
 /**
  * Fetches any arbitrary data.gov.in resource by ID.
- * Useful for custom datasets not covered by the helpers above.
  * @param {string} resourceId - The dataset resource UID.
- * @param {object} [filters] - Query filters.
+ * @param {object} [filters={}] - Query filters.
  * @param {number} [limit=50] - Max records.
  * @param {number} [offset=0] - Pagination offset.
  * @returns {Promise<object>} Resource records.

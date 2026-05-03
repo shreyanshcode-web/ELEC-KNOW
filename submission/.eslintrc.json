@@ -1,7 +1,7 @@
 {
   "env": {
     "node": true,
-    "es2021": true,
+    "es2022": true,
     "jest": true
   },
   "extends": "eslint:recommended",
@@ -10,7 +10,13 @@
     "sourceType": "module"
   },
   "rules": {
-    "no-unused-vars": "warn",
-    "no-console": "off"
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": ["warn", { "allow": ["debug"] }],
+    "eqeqeq": ["error", "always"],
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-throw-literal": "error",
+    "curly": ["error", "multi-line"],
+    "no-return-await": "warn"
   }
 }

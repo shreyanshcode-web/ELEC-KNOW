@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { getRedisClient } from '../config/redis.js';
+import logger from '../config/logger.js';
 
 /**
  * Redis-backed rate limiter for API endpoint protection.
@@ -53,7 +54,7 @@ class RedisRateLimitStore {
       };
     } catch (error) {
       // Fallback: allow request if Redis is unavailable
-      console.warn('Rate limit Redis error (allowing request):', error.message);
+      logger.warn('Rate limit Redis error (allowing request)', { error: error.message });
       return { totalHits: 0, resetTime: new Date() };
     }
   }
@@ -68,7 +69,7 @@ class RedisRateLimitStore {
       if (!client) return;
       await client.decr(`${this.prefix}${key}`);
     } catch (error) {
-      console.warn('Rate limit decrement error:', error.message);
+      logger.warn('Rate limit decrement error', { error: error.message });
     }
   }
 
@@ -82,7 +83,7 @@ class RedisRateLimitStore {
       if (!client) return;
       await client.del(`${this.prefix}${key}`);
     } catch (error) {
-      console.warn('Rate limit reset error:', error.message);
+      logger.warn('Rate limit reset error', { error: error.message });
     }
   }
 }

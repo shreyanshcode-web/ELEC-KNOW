@@ -1,26 +1,35 @@
 import axios from 'axios';
 import { getCachedResponse, setCachedResponse } from './cache.service.js';
+import logger from '../config/logger.js';
 
 /**
  * ECI Electoralsearch API service.
  * Official Election Commission of India voter lookup — no API key required.
- * Endpoints: electoralsearch.eci.gov.in
+ * Endpoint: electoralsearch.eci.gov.in
+ *
+ * Part of the election process education platform — helps users
+ * locate their polling station and verify their registration status.
+ *
  * @module services/eci.service
  */
 
 const ECI_BASE_URL = process.env.ECI_BASE_URL || 'https://electoralsearch.eci.gov.in';
-const REQUEST_TIMEOUT_MS = 10000;
+
+/** @type {number} Request timeout in milliseconds */
+const REQUEST_TIMEOUT_MS = 10_000;
+
+/** @type {number} Cache TTL: 30 days (voter rolls update ~annually) */
+const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 /**
  * Looks up voter details by EPIC (Voter ID) number.
  * Returns personal name info from the electoral roll.
- * @param {string} epicNumber - The EPIC (voter ID), e.g. 'IHM2796746'.
+ * @param {string} epicNumber - The EPIC (voter ID), e.g. 'ABC1234567'.
  * @returns {Promise<object|null>} Voter details or null on failure.
  */
 export const getVoterByEpic = async (epicNumber) => {
   const cacheKey = `eci:epic:${epicNumber.toUpperCase()}`;
 
-  // Check Redis cache first (voter data changes infrequently)
   const cached = await getCachedResponse(cacheKey, 'eci');
   if (cached) {
     return JSON.parse(cached);
@@ -36,20 +45,19 @@ export const getVoterByEpic = async (epicNumber) => {
     const data = response.data?.data || null;
 
     if (data) {
-      // Cache for 30 days — voter rolls update ~annually
-      await setCachedResponse(cacheKey, 'eci', JSON.stringify(data), 2592000);
+      await setCachedResponse(cacheKey, 'eci', JSON.stringify(data), CACHE_TTL_SECONDS);
     }
 
     return data;
   } catch (error) {
-    console.error('ECI EPIC lookup failed:', error.message);
+    logger.warn('ECI EPIC lookup failed', { error: error.message, epicNumber });
     return null;
   }
 };
 
 /**
  * Looks up polling station and constituency info by EPIC number.
- * Returns booth address, assembly constituency, parliament constituency, etc.
+ * Returns booth address, assembly constituency, parliament constituency.
  * @param {string} epicNumber - The EPIC (voter ID).
  * @returns {Promise<object|null>} Polling station details or null.
  */
@@ -71,13 +79,12 @@ export const getPollingStationByEpic = async (epicNumber) => {
     const data = response.data?.data || null;
 
     if (data) {
-      // Cache for 30 days
-      await setCachedResponse(cacheKey, 'eci', JSON.stringify(data), 2592000);
+      await setCachedResponse(cacheKey, 'eci', JSON.stringify(data), CACHE_TTL_SECONDS);
     }
 
     return data;
   } catch (error) {
-    console.error('ECI polling station lookup failed:', error.message);
+    logger.warn('ECI polling station lookup failed', { error: error.message, epicNumber });
     return null;
   }
 };

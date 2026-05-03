@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getCachedResponse, setCachedResponse } from './cache.service.js';
+import logger from '../config/logger.js';
 
 /**
  * Verifik Voting Information API service.
@@ -11,7 +12,12 @@ import { getCachedResponse, setCachedResponse } from './cache.service.js';
 
 const getVerifikBaseUrl = () => process.env.VERIFIK_BASE_URL || 'https://api.verifik.co';
 const getVerifikApiToken = () => process.env.VERIFIK_API_TOKEN;
-const REQUEST_TIMEOUT_MS = 10000;
+
+/** @type {number} Request timeout in milliseconds */
+const REQUEST_TIMEOUT_MS = 10_000;
+
+/** @type {number} Cache TTL: 30 days */
+const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 /**
  * Builds the Verifik authorization headers.
@@ -32,7 +38,7 @@ const getAuthHeaders = () => {
 /**
  * Looks up voter information by EPIC using Verifik's verified endpoint.
  * Returns name, relative, and other electoral roll fields.
- * @param {string} epicNumber - The EPIC (voter ID), e.g. 'IHM2796746'.
+ * @param {string} epicNumber - The EPIC (voter ID), e.g. 'ABC1234567'.
  * @returns {Promise<object|null>} Voter details or null on failure.
  */
 export const getVoterInfo = async (epicNumber) => {
@@ -53,8 +59,7 @@ export const getVoterInfo = async (epicNumber) => {
     const data = response.data?.data || null;
 
     if (data) {
-      // Cache for 30 days
-      await setCachedResponse(cacheKey, 'verifik', JSON.stringify(data), 2592000);
+      await setCachedResponse(cacheKey, 'verifik', JSON.stringify(data), CACHE_TTL_SECONDS);
     }
 
     return data;
@@ -63,11 +68,11 @@ export const getVoterInfo = async (epicNumber) => {
     const msg = error.response?.data?.message || error.message;
 
     if (status === 401 || status === 403) {
-      console.error('Verifik auth failed; check Secret Manager secret verifik-api-token:', msg);
+      logger.error('Verifik auth failed — check Secret Manager secret verifik-api-token', { status, error: msg });
     } else if (status === 429) {
-      console.warn('Verifik rate limit exceeded:', msg);
+      logger.warn('Verifik rate limit exceeded', { error: msg });
     } else {
-      console.error('Verifik voter lookup failed:', msg);
+      logger.warn('Verifik voter lookup failed', { error: msg, epicNumber });
     }
 
     return null;
@@ -98,13 +103,13 @@ export const getPollingInfo = async (epicNumber) => {
     const data = response.data?.data || null;
 
     if (data) {
-      await setCachedResponse(cacheKey, 'verifik', JSON.stringify(data), 2592000);
+      await setCachedResponse(cacheKey, 'verifik', JSON.stringify(data), CACHE_TTL_SECONDS);
     }
 
     return data;
   } catch (error) {
     const msg = error.response?.data?.message || error.message;
-    console.error('Verifik polling lookup failed:', msg);
+    logger.warn('Verifik polling lookup failed', { error: msg, epicNumber });
     return null;
   }
 };

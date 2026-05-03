@@ -1,7 +1,7 @@
 {
-  "name": "election-education-bot",
+  "name": "election-process-education",
   "version": "2.0.0",
-  "description": "An interactive election process education platform powered by Google Services with Kubernetes, Kafka, and Redis.",
+  "description": "An interactive election process education assistant that helps users understand election processes, timelines, and steps — powered by Google Gemini and deployed on Google Cloud.",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

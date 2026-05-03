@@ -1,6 +1,7 @@
 import * as eciService from './eci.service.js';
 import * as verifikService from './verifik.service.js';
 import * as datagovService from './datagov.service.js';
+import logger from '../config/logger.js';
 
 /**
  * Unified Election Data Orchestrator.
@@ -36,7 +37,7 @@ export const lookupVoter = async (epicNumber) => {
       return { data: verifikResult, source: 'verifik' };
     }
   } catch (err) {
-    console.warn('Verifik fallback skipped:', err.message);
+    logger.warn('Verifik voter fallback skipped', { error: err.message });
   }
 
   throw new Error(`Voter lookup failed for EPIC ${epicNumber} — all sources unavailable.`);
@@ -62,7 +63,7 @@ export const lookupPollingStation = async (epicNumber) => {
       return { data: verifikResult, source: 'verifik' };
     }
   } catch (err) {
-    console.warn('Verifik polling fallback skipped:', err.message);
+    logger.warn('Verifik polling fallback skipped', { error: err.message });
   }
 
   throw new Error(`Polling station lookup failed for EPIC ${epicNumber} — all sources unavailable.`);

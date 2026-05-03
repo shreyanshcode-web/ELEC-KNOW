@@ -13,6 +13,7 @@ import { testConnection } from './config/database.js';
 import { testRedis } from './config/redis.js';
 import { isKafkaAvailable } from './config/kafka.js';
 import electionRoutes from './routes/election.routes.js';
+import logger from './config/logger.js';
 
 export const setupRoutes = (app) => {
   const router = Router();
@@ -102,7 +103,7 @@ export const setupRoutes = (app) => {
           });
         } catch (err) {
           // DB/Kafka failures must not break the response
-          console.error('Background persist/publish error:', err.message);
+          logger.warn('Background persist/publish error', { error: err.message });
         }
       };
 
