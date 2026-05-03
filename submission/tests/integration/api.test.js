@@ -1,12 +1,13 @@
-import { jest } from '@jest/globals';
 import request from 'supertest';
-import app from '../../src/index.js';
+
+let app;
 
 describe('Election Education API Integration', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     // Allows us to bypass strict JWT check without emulator for this CI run
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
+    ({ default: app } = await import('../../src/index.js'));
   });
 
   afterAll(() => {

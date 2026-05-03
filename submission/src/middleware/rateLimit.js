@@ -14,9 +14,9 @@ import { getRedisClient } from '../config/redis.js';
  * ensuring consistent limiting across all K8s pod replicas.
  */
 class RedisRateLimitStore {
-  constructor(windowMs) {
+  constructor(windowMs, prefix) {
     this.windowMs = windowMs;
-    this.prefix = 'rl:';
+    this.prefix = prefix;
   }
 
   /**
@@ -27,6 +27,10 @@ class RedisRateLimitStore {
   async increment(key) {
     try {
       const client = await getRedisClient();
+      if (!client) {
+        return { totalHits: 0, resetTime: new Date(Date.now() + this.windowMs) };
+      }
+
       const redisKey = `${this.prefix}${key}`;
 
       const results = await client
@@ -61,6 +65,7 @@ class RedisRateLimitStore {
   async decrement(key) {
     try {
       const client = await getRedisClient();
+      if (!client) return;
       await client.decr(`${this.prefix}${key}`);
     } catch (error) {
       console.warn('Rate limit decrement error:', error.message);
@@ -74,6 +79,7 @@ class RedisRateLimitStore {
   async resetKey(key) {
     try {
       const client = await getRedisClient();
+      if (!client) return;
       await client.del(`${this.prefix}${key}`);
     } catch (error) {
       console.warn('Rate limit reset error:', error.message);
@@ -90,10 +96,12 @@ export const apiRateLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  store: new RedisRateLimitStore(15 * 60 * 1000),
   message: {
     error: 'Too many requests. Please try again later.',
   },
+  store: process.env.NODE_ENV === 'test'
+    ? undefined
+    : new RedisRateLimitStore(15 * 60 * 1000, 'rl:api:'),
 });
 
 /**
@@ -105,8 +113,10 @@ export const aiRateLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  store: new RedisRateLimitStore(5 * 60 * 1000),
   message: {
     error: 'AI query rate limit exceeded. Please wait before sending more questions.',
   },
+  store: process.env.NODE_ENV === 'test'
+    ? undefined
+    : new RedisRateLimitStore(5 * 60 * 1000, 'rl:ai:'),
 });

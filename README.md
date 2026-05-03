@@ -22,6 +22,8 @@ From the repository root:
 npm --prefix submission run deploy:cloud-run
 ```
 
+On Windows PowerShell, use `npm.cmd --prefix submission run deploy:cloud-run` if script execution policy blocks `npm`.
+
 The deploy command uses Cloud Build, Artifact Registry, Secret Manager, and Cloud Run. Runtime API keys are injected through Secret Manager, not plain Cloud Run env vars. Set `GCP_PROJECT_ID` and local key values in `submission/.env` so the command can upload them as secret versions, or create the Secret Manager secrets first.
 
 ### Running the Application

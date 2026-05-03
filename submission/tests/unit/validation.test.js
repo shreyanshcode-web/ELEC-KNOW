@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { validateQuery } from '../../src/middleware/validation.js';
 
 describe('Validation Middleware Unit Tests', () => {

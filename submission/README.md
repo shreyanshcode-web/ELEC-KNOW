@@ -59,6 +59,8 @@ From the repository root:
 npm --prefix submission run deploy:cloud-run
 ```
 
+On Windows PowerShell, use `npm.cmd --prefix submission run deploy:cloud-run` if script execution policy blocks `npm`.
+
 The command builds `docker/Dockerfile.api` with Cloud Build, pushes the image to Artifact Registry, syncs supported API keys and credentials from `submission/.env` into Secret Manager, and deploys the API to Cloud Run with `--set-secrets`.
 
 Minimum prerequisites:

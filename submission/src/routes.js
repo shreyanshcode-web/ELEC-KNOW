@@ -9,8 +9,8 @@ import { findOrCreateUser } from './models/user.model.js';
 import { createQuery } from './models/query.model.js';
 import { getAllTopics, getPopularTopics } from './models/topic.model.js';
 import { getUsageStats, getDailyQueryVolume } from './services/analytics.service.js';
-import { isDatabaseAvailable, testConnection } from './config/database.js';
-import { isRedisAvailable, testRedis } from './config/redis.js';
+import { testConnection } from './config/database.js';
+import { testRedis } from './config/redis.js';
 import { isKafkaAvailable } from './config/kafka.js';
 import electionRoutes from './routes/election.routes.js';
 

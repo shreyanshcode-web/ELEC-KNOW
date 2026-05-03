@@ -6,7 +6,7 @@ if (!admin.apps.length) {
   // For local testing without full creds, we catch errors and mock it or assume emulator is set.
   try {
     admin.initializeApp();
-  } catch(e) {
+  } catch {
     console.warn("Firebase admin initialization failed, likely missing credentials.");
   }
 }

@@ -63,7 +63,7 @@ export const getRedisClient = async () => {
       },
     });
 
-    client.on('error', (err) => {
+    client.on('error', () => {
       redisAvailable = false;
     });
 
@@ -80,7 +80,7 @@ export const getRedisClient = async () => {
     await client.connect();
     redisAvailable = true;
     return client;
-  } catch (err) {
+  } catch {
     redisAvailable = false;
     connectionFailed = true;
     logger.warn('Redis connection failed — app will run without cache');
