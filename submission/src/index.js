@@ -70,6 +70,19 @@ app.use((req, res, next) => {
 app.use(apiRateLimiter);
 
 setupRoutes(app);
+
+// React SPA fallback: serve index.html for all non-API routes
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;
