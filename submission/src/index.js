@@ -15,13 +15,29 @@ const app = express();
 
 // ──────────── Security Middleware ────────────
 app.use(helmet({
-  contentSecurityPolicy: false,  // Disabled: Tailwind v4 @theme directives need relaxed CSP
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
   crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
-app.use(cors());
+// CORS: restrict origins in production, allow all in dev
+const corsOptions = process.env.NODE_ENV === 'production'
+  ? { origin: process.env.CORS_ALLOWED_ORIGINS?.split(',') || [/\.run\.app$/], credentials: true }
+  : { origin: true };
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static('public'));
+app.use(express.static('public', { dotfiles: 'deny' }));
 
 // ──────────── Request Logging (Cloud Trace correlation) ────────────
 app.use((req, res, next) => {
