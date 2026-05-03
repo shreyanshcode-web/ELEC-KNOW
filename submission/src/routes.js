@@ -25,19 +25,18 @@ export const setupRoutes = (app) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
   });
 
-  // K8s READINESS probe — can the app serve traffic? (checks dependencies)
+  // K8s/Cloud Run READINESS probe — can the app serve traffic?
   router.get('/ready', async (req, res) => {
     const dbOk = await testConnection();
     const redisOk = await testRedis();
 
-    const ready = dbOk; // DB is required; Redis/Kafka are optional
-
-    res.status(ready ? 200 : 503).json({
-      status: ready ? 'ready' : 'not_ready',
+    // All dependencies are optional — the app serves AI/static content without them
+    res.status(200).json({
+      status: 'ready',
       dependencies: {
-        database: dbOk ? 'connected' : 'unavailable',
-        redis: redisOk ? 'connected' : 'unavailable (degraded)',
-        kafka: isKafkaAvailable() ? 'connected' : 'unavailable (degraded)',
+        database: dbOk ? 'connected' : 'unavailable (optional)',
+        redis: redisOk ? 'connected' : 'unavailable (optional)',
+        kafka: isKafkaAvailable() ? 'connected' : 'unavailable (optional)',
       },
       timestamp: new Date().toISOString(),
     });

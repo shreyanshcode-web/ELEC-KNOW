@@ -188,10 +188,8 @@ if [ "$IMAGES_ONLY" = false ]; then
   fi
   log "ConfigMap applied"
 
-  # Apply Secrets (from Secret Manager — not from YAML)
-  # In production, use External Secrets Operator or mounted secrets
-  kubectl apply -f k8s/secrets.yaml
-  warn "secrets.yaml applied — replace placeholders with real values!"
+  # Secrets are managed via Google Secret Manager + Workload Identity
+  # No K8s secrets.yaml needed
 
   # Deploy infrastructure pods
   kubectl apply -f k8s/redis-deployment.yaml
