@@ -15,16 +15,8 @@ const app = express();
 
 // ──────────── Security Middleware ────────────
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "https://firebasestorage.googleapis.com"],
-    }
-  }
+  contentSecurityPolicy: false,  // Disabled: Tailwind v4 @theme directives need relaxed CSP
+  crossOriginEmbedderPolicy: false,
 }));
 
 app.use(cors());
