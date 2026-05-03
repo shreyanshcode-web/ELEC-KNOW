@@ -90,7 +90,7 @@ export const loadAllSecrets = async () => {
 
   /** Secret name → env var fallback name → required flag */
   const secretMap = [
-    { name: 'gemini-api-key', envKey: 'GEMINI_API_KEY', required: process.env.NODE_ENV === 'production' },
+    { name: 'gemini-api-key', envKey: 'GEMINI_API_KEY', required: false },
     { name: 'database-url', envKey: 'DATABASE_URL', required: false },
     { name: 'db-password', envKey: 'DB_PASSWORD', required: false },
     { name: 'datagov-api-key', envKey: 'DATAGOV_API_KEY', required: false },
