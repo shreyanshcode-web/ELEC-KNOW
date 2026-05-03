@@ -1,5 +1,6 @@
 import { ArrowRight, BarChart3, BookOpen, CalendarDays, Map, Users2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import IllustrationFrame from './IllustrationFrame';
 import SectionHeader from './SectionHeader';
 
@@ -7,7 +8,7 @@ const cards = [
   {
     accent: 'from-amber-50 to-orange-100/70',
     description: 'Learn registration, voter ID needs, booth etiquette, and what happens from queue to ballot.',
-    href: '#overview',
+    to: '/#overview',
     icon: BookOpen,
     id: 'voting-process',
     imageSrc: '/illustrations/action-voting-process.svg',
@@ -17,7 +18,7 @@ const cards = [
   {
     accent: 'from-teal-50 to-cyan-100/70',
     description: 'See the election phases from announcement through results with plain-language context.',
-    href: '#election-timeline',
+    to: '/timeline',
     icon: CalendarDays,
     id: 'timeline',
     imageSrc: '/illustrations/action-timeline.svg',
@@ -27,7 +28,7 @@ const cards = [
   {
     accent: 'from-rose-50 to-orange-100/70',
     description: 'Compare candidate profiles, priorities, and background signals without partisan clutter.',
-    href: '#copilot-panel',
+    to: '/candidates',
     icon: Users2,
     id: 'candidates',
     imageSrc: '/illustrations/action-candidates.svg',
@@ -37,7 +38,7 @@ const cards = [
   {
     accent: 'from-sky-50 to-emerald-100/70',
     description: 'Find the right booth faster with map cues, constituency hints, and EPIC-based lookup.',
-    href: '#polling-locator',
+    to: '/#polling-locator',
     icon: Map,
     id: 'booth-finder',
     imageSrc: '/illustrations/action-booth-finder.svg',
@@ -47,7 +48,7 @@ const cards = [
   {
     accent: 'from-slate-100 to-amber-100/80',
     description: 'Understand counting patterns, result announcements, and what each number actually means.',
-    href: '#copilot-panel',
+    to: '/#copilot-panel',
     icon: BarChart3,
     id: 'results',
     imageSrc: '/illustrations/action-results.svg',
@@ -55,6 +56,9 @@ const cards = [
     title: 'Results',
   },
 ] as const;
+
+// Need a custom motion wrapper for Link to make framer-motion work with react-router
+const MotionLink = motion(Link);
 
 export default function QuickAccessCards() {
   return (
@@ -67,11 +71,11 @@ export default function QuickAccessCards() {
 
       <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
         {cards.map((card, index) => (
-          <motion.a
+          <MotionLink
             key={card.id}
+            to={card.to}
             animate={{ opacity: 1, y: 0 }}
             className="panel group flex h-full flex-col rounded-[28px] p-5"
-            href={card.href}
             initial={{ opacity: 0, y: 16 }}
             transition={{ delay: index * 0.06, duration: 0.45 }}
             whileHover={{ y: -6 }}
@@ -100,7 +104,7 @@ export default function QuickAccessCards() {
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </div>
             </div>
-          </motion.a>
+          </MotionLink>
         ))}
       </div>
     </section>

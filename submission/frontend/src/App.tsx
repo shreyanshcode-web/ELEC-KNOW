@@ -1,15 +1,10 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
+import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import CopilotPanel from './components/CopilotPanel';
-import HeroSection from './components/HeroSection';
-import ElectionTimeline from './components/ElectionTimeline';
-import QuickAccessCards from './components/QuickAccessCards';
-import PollingLocator from './components/PollingLocator';
+import Home from './pages/Home';
+import Candidates from './pages/Candidates';
+import TimelinePage from './pages/TimelinePage';
 
 export default function App() {
   return (
@@ -27,10 +22,12 @@ export default function App() {
 
           <main className="px-4 pb-16 sm:px-6 lg:px-8 xl:px-0 xl:pb-20">
             <div className="mx-auto max-w-[1180px]">
-              <HeroSection />
-              <QuickAccessCards />
-              <ElectionTimeline />
-              <PollingLocator />
+              
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/candidates" element={<Candidates />} />
+                <Route path="/timeline" element={<TimelinePage />} />
+              </Routes>
 
               <footer className="mt-16 border-t border-slate-200/70 pt-8 text-sm text-slate-500">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
