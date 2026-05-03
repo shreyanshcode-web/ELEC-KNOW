@@ -99,6 +99,7 @@ export default function TopBar() {
             <div className="relative group flex items-center">
               <Globe size={18} className="absolute left-3 text-slate-500 pointer-events-none group-focus-within:text-primary transition-colors" />
               <select
+                aria-label="Select Language"
                 value={currentLang}
                 onChange={handleLanguageChange}
                 className="h-10 pl-9 pr-8 rounded-2xl border border-slate-200 bg-white/90 text-sm font-medium text-slate-700 outline-none transition focus:border-primary/25 focus:ring-4 focus:ring-primary/10 appearance-none cursor-pointer hover:border-slate-300"

@@ -74,6 +74,7 @@ export default function QuickAccessCards() {
           <MotionLink
             key={card.id}
             to={card.to}
+            aria-label={`Open ${card.title} section`}
             animate={{ opacity: 1, y: 0 }}
             className="panel group flex h-full flex-col rounded-[28px] p-5"
             initial={{ opacity: 0, y: 16 }}

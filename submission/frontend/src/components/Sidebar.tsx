@@ -40,6 +40,7 @@ export default function Sidebar() {
                 <MotionLink
                   key={item.id}
                   to={item.href}
+                  aria-label={`Navigate to ${item.label}`}
                   whileHover={{ x: 4 }}
                   className={`group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-colors ${
                     isActive 
