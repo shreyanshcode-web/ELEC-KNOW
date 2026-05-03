@@ -1,9 +1,15 @@
 import { getProducer, KAFKA_TOPICS } from '../config/kafka.js';
+import logger from '../config/logger.js';
 
 /**
  * Kafka event producer service.
  * Publishes domain events to Kafka topics for asynchronous processing
  * by worker consumers (analytics, logging, etc.).
+ *
+ * Graceful degradation: when Kafka is unavailable (e.g. Cloud Run without
+ * a Kafka cluster), all publish calls silently return without error.
+ * The API response is never blocked by event publishing.
+ *
  * @module services/event.service
  */
 
@@ -22,6 +28,7 @@ import { getProducer, KAFKA_TOPICS } from '../config/kafka.js';
 export const publishQuerySubmitted = async (payload) => {
   try {
     const producer = await getProducer();
+    if (!producer) return; // Kafka unavailable — silently degrade
 
     await producer.send({
       topic: KAFKA_TOPICS.QUERY_SUBMITTED,
@@ -37,10 +44,10 @@ export const publishQuerySubmitted = async (payload) => {
       ],
     });
 
-    console.log(`Event published: QUERY_SUBMITTED (query=${payload.queryId})`);
+    logger.debug(`Event published: QUERY_SUBMITTED`, { queryId: payload.queryId });
   } catch (error) {
     // Event publishing failures are non-fatal — the query still succeeded
-    console.error('Failed to publish QUERY_SUBMITTED event:', error.message);
+    logger.warn('Failed to publish QUERY_SUBMITTED event', { error: error.message });
   }
 };
 
@@ -48,7 +55,7 @@ export const publishQuerySubmitted = async (payload) => {
  * Publishes an analytics event for tracking and reporting.
  * @param {object} payload - The analytics event payload.
  * @param {string} payload.queryId - UUID of the query.
- * @param {number} payload.tokenCount - Tokens consumed by the AI response.
+ * @param {number} [payload.tokenCount] - Tokens consumed by the AI response.
  * @param {number} [payload.feedbackRating] - User satisfaction rating (1-5).
  * @param {object} [payload.metadata] - Additional metadata.
  * @returns {Promise<void>}
@@ -56,6 +63,7 @@ export const publishQuerySubmitted = async (payload) => {
 export const publishAnalyticsEvent = async (payload) => {
   try {
     const producer = await getProducer();
+    if (!producer) return; // Kafka unavailable — silently degrade
 
     await producer.send({
       topic: KAFKA_TOPICS.ANALYTICS,
@@ -70,7 +78,9 @@ export const publishAnalyticsEvent = async (payload) => {
         },
       ],
     });
+
+    logger.debug('Event published: ANALYTICS_UPDATE', { queryId: payload.queryId });
   } catch (error) {
-    console.error('Failed to publish analytics event:', error.message);
+    logger.warn('Failed to publish analytics event', { error: error.message });
   }
 };

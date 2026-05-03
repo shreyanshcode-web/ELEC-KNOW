@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { validateEpicNumber } from '../middleware/validation.js';
 import { aiRateLimiter } from '../middleware/rateLimit.js';
 import {
   lookupVoter,
@@ -25,15 +26,9 @@ const router = Router();
  * Looks up voter details by EPIC (Voter ID).
  * Cascading fallback: ECI → Verifik.
  */
-router.get('/voter/:epicNumber', requireAuth, aiRateLimiter, async (req, res, next) => {
+router.get('/voter/:epicNumber', requireAuth, validateEpicNumber, aiRateLimiter, async (req, res, next) => {
   try {
-    const { epicNumber } = req.params;
-
-    if (!epicNumber || epicNumber.length < 6) {
-      return res.status(400).json({ error: 'Valid EPIC number is required (minimum 6 characters).' });
-    }
-
-    const result = await lookupVoter(epicNumber);
+    const result = await lookupVoter(req.params.epicNumber);
     res.json({ data: result.data, source: result.source });
   } catch (error) {
     next(error);
@@ -45,15 +40,9 @@ router.get('/voter/:epicNumber', requireAuth, aiRateLimiter, async (req, res, ne
  * Looks up polling station and constituency by EPIC.
  * Returns booth address, assembly, parliament info.
  */
-router.get('/polling-station/:epicNumber', requireAuth, aiRateLimiter, async (req, res, next) => {
+router.get('/polling-station/:epicNumber', requireAuth, validateEpicNumber, aiRateLimiter, async (req, res, next) => {
   try {
-    const { epicNumber } = req.params;
-
-    if (!epicNumber || epicNumber.length < 6) {
-      return res.status(400).json({ error: 'Valid EPIC number is required.' });
-    }
-
-    const result = await lookupPollingStation(epicNumber);
+    const result = await lookupPollingStation(req.params.epicNumber);
     res.json({ data: result.data, source: result.source });
   } catch (error) {
     next(error);
