@@ -15,7 +15,6 @@ import { HTTP_STATUS } from '../config/constants.js';
  * @module middleware/auth
  */
 
-const getClientId = () => process.env.GOOGLE_OAUTH_CLIENT_ID || 'dummy-client-id';
 const client = new OAuth2Client();
 
 /**
