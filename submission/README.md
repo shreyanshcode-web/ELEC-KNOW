@@ -51,6 +51,41 @@ This submission meticulously adheres to the 6 AI-graded criteria:
 
 ## 🐳 Docker & Kubernetes
 
+## Cloud Run One-Command Deploy
+
+From the repository root:
+
+```bash
+npm --prefix submission run deploy:cloud-run
+```
+
+The command builds `docker/Dockerfile.api` with Cloud Build, pushes the image to Artifact Registry, syncs supported API keys and credentials from `submission/.env` into Secret Manager, and deploys the API to Cloud Run with `--set-secrets`.
+
+Minimum prerequisites:
+
+- `gcloud` CLI installed and authenticated with `gcloud auth login`
+- A selected project via `gcloud config set project YOUR_PROJECT`, or `GCP_PROJECT_ID` set in `submission/.env`
+- `GEMINI_API_KEY` set in `submission/.env`, or an existing Secret Manager secret named `gemini-api-key`
+
+Secret Manager names used by the deploy command:
+
+| Runtime env var | Secret Manager secret |
+|---|---|
+| `GEMINI_API_KEY` | `gemini-api-key` |
+| `DATAGOV_API_KEY` | `datagov-api-key` |
+| `VERIFIK_API_TOKEN` | `verifik-api-token` |
+| `DATABASE_URL` | `database-url` |
+| `DB_PASSWORD` | `db-password` |
+| `REDIS_PASSWORD` | `redis-password` |
+
+Useful overrides:
+
+```bash
+npm --prefix submission run deploy:cloud-run -- --project YOUR_PROJECT --region us-central1 --service election-education-api
+```
+
+Cloud SQL is optional. To attach it, set `CLOUD_SQL_CONNECTION_NAME`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` in `submission/.env`; the deploy command stores `DB_PASSWORD` in Secret Manager and adds the Cloud SQL instance to the Cloud Run service.
+
 ### Local Development (Docker Compose)
 
 ```bash
@@ -148,7 +183,7 @@ npm run test:coverage # With coverage report
 
 ## 🔒 Security Features
 
-- **No hardcoded secrets** — all credentials via Google Secret Manager / env vars
+- **No hardcoded secrets** — production credentials are loaded from Google Secret Manager; `.env` is local-only
 - **Firebase JWT validation** on every protected endpoint
 - **Parameterized SQL** — no string-interpolated queries anywhere
 - **CSP headers** via Helmet

@@ -9,8 +9,8 @@ import { getCachedResponse, setCachedResponse } from './cache.service.js';
  * @module services/verifik.service
  */
 
-const VERIFIK_BASE_URL = process.env.VERIFIK_BASE_URL || 'https://api.verifik.co';
-const VERIFIK_API_TOKEN = process.env.VERIFIK_API_TOKEN;
+const getVerifikBaseUrl = () => process.env.VERIFIK_BASE_URL || 'https://api.verifik.co';
+const getVerifikApiToken = () => process.env.VERIFIK_API_TOKEN;
 const REQUEST_TIMEOUT_MS = 10000;
 
 /**
@@ -19,12 +19,13 @@ const REQUEST_TIMEOUT_MS = 10000;
  * @throws {Error} If VERIFIK_API_TOKEN is not configured.
  */
 const getAuthHeaders = () => {
-  if (!VERIFIK_API_TOKEN) {
-    throw new Error('VERIFIK_API_TOKEN is not configured. Register at https://verifik.co for a free trial.');
+  const apiToken = getVerifikApiToken();
+  if (!apiToken) {
+    throw new Error('VERIFIK_API_TOKEN is not configured. Add it to Google Secret Manager as verifik-api-token.');
   }
   return {
     Accept: 'application/json',
-    Authorization: `Bearer ${VERIFIK_API_TOKEN}`,
+    Authorization: `Bearer ${apiToken}`,
   };
 };
 
@@ -43,7 +44,7 @@ export const getVoterInfo = async (epicNumber) => {
   }
 
   try {
-    const response = await axios.get(`${VERIFIK_BASE_URL}/voting/in/eci/epic`, {
+    const response = await axios.get(`${getVerifikBaseUrl()}/voting/in/eci/epic`, {
       params: { documentNumber: epicNumber.toUpperCase() },
       headers: getAuthHeaders(),
       timeout: REQUEST_TIMEOUT_MS,
@@ -62,7 +63,7 @@ export const getVoterInfo = async (epicNumber) => {
     const msg = error.response?.data?.message || error.message;
 
     if (status === 401 || status === 403) {
-      console.error('Verifik auth failed — check VERIFIK_API_TOKEN:', msg);
+      console.error('Verifik auth failed; check Secret Manager secret verifik-api-token:', msg);
     } else if (status === 429) {
       console.warn('Verifik rate limit exceeded:', msg);
     } else {
@@ -88,7 +89,7 @@ export const getPollingInfo = async (epicNumber) => {
   }
 
   try {
-    const response = await axios.get(`${VERIFIK_BASE_URL}/voting/in/eci/epic/votacion`, {
+    const response = await axios.get(`${getVerifikBaseUrl()}/voting/in/eci/epic/votacion`, {
       params: { documentNumber: epicNumber.toUpperCase() },
       headers: getAuthHeaders(),
       timeout: REQUEST_TIMEOUT_MS,

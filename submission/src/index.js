@@ -1,7 +1,7 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { setupRoutes } from './routes.js';
 import { errorHandler } from './middleware/error.js';
 import { apiRateLimiter } from './middleware/rateLimit.js';
@@ -10,8 +10,6 @@ import { closeRedis, getRedisClient } from './config/redis.js';
 import { closeProducer, getProducer } from './config/kafka.js';
 import { loadAllSecrets } from './config/secrets.js';
 import logger from './config/logger.js';
-
-dotenv.config();
 
 const app = express();
 

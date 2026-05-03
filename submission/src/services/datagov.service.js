@@ -8,8 +8,8 @@ import { getCachedResponse, setCachedResponse } from './cache.service.js';
  * @module services/datagov.service
  */
 
-const DATAGOV_BASE_URL = process.env.DATAGOV_BASE_URL || 'https://api.data.gov.in';
-const DATAGOV_API_KEY = process.env.DATAGOV_API_KEY;
+const getDatagovBaseUrl = () => process.env.DATAGOV_BASE_URL || 'https://api.data.gov.in';
+const getDatagovApiKey = () => process.env.DATAGOV_API_KEY;
 const REQUEST_TIMEOUT_MS = 15000;
 
 /** Well-known resource UIDs for Lok Sabha 2024 data */
@@ -24,9 +24,11 @@ const RESOURCE_IDS = Object.freeze({
  * @throws {Error} If DATAGOV_API_KEY is not set.
  */
 const ensureApiKey = () => {
-  if (!DATAGOV_API_KEY) {
-    throw new Error('DATAGOV_API_KEY is not configured. Register at https://data.gov.in/ for a free key.');
+  const apiKey = getDatagovApiKey();
+  if (!apiKey) {
+    throw new Error('DATAGOV_API_KEY is not configured. Add it to Google Secret Manager as datagov-api-key.');
   }
+  return apiKey;
 };
 
 /**
@@ -38,7 +40,7 @@ const ensureApiKey = () => {
  * @returns {Promise<object>} { records, total, count } or error.
  */
 const fetchResource = async (resourceId, filters = {}, limit = 50, offset = 0) => {
-  ensureApiKey();
+  const apiKey = ensureApiKey();
 
   const cacheKey = `datagov:${resourceId}:${JSON.stringify(filters)}:${limit}:${offset}`;
   const cached = await getCachedResponse(cacheKey, 'datagov');
@@ -48,14 +50,14 @@ const fetchResource = async (resourceId, filters = {}, limit = 50, offset = 0) =
 
   try {
     const params = {
-      'api-key': DATAGOV_API_KEY,
+      'api-key': apiKey,
       format: 'json',
       limit,
       offset,
       ...filters,
     };
 
-    const response = await axios.get(`${DATAGOV_BASE_URL}/resource/${resourceId}`, {
+    const response = await axios.get(`${getDatagovBaseUrl()}/resource/${resourceId}`, {
       params,
       timeout: REQUEST_TIMEOUT_MS,
     });

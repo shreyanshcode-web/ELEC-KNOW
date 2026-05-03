@@ -11,7 +11,7 @@ let ai = null;
  */
 export const getElectionInsight = async (query, knowledgeLevel = 'Beginner') => {
   if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
-    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file to use the AI Copilot.');
+    throw new Error('GEMINI_API_KEY is not configured. Add it to Google Secret Manager as gemini-api-key, or use .env for local development.');
   }
 
   if (!ai) {

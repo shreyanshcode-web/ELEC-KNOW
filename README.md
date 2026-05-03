@@ -14,6 +14,16 @@ Please navigate to the `submission` directory to view the project source code an
 cd submission
 ```
 
+### One-Command Cloud Run Deploy
+
+From the repository root:
+
+```bash
+npm --prefix submission run deploy:cloud-run
+```
+
+The deploy command uses Cloud Build, Artifact Registry, Secret Manager, and Cloud Run. Runtime API keys are injected through Secret Manager, not plain Cloud Run env vars. Set `GCP_PROJECT_ID` and local key values in `submission/.env` so the command can upload them as secret versions, or create the Secret Manager secrets first.
+
 ### Running the Application
 
 1. Navigate to the `submission` folder.

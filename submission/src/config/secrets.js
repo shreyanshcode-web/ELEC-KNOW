@@ -3,8 +3,8 @@ import logger from './logger.js';
 
 /**
  * Google Secret Manager integration.
- * In production (GKE/Cloud Run), loads secrets from Secret Manager.
- * In development, falls back to environment variables.
+ * In production (GKE/Cloud Run), loads credentials from Secret Manager.
+ * In development only, falls back to environment variables.
  *
  * Uses Workload Identity for authentication (no service account key files).
  * @see https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets
@@ -79,7 +79,8 @@ export const getSecret = async (secretName, version = 'latest') => {
 };
 
 /**
- * Loads all application secrets from Secret Manager (or env vars).
+ * Loads all application credentials from Secret Manager in production.
+ * Local development can still use .env fallback values.
  * Call once during startup. Non-critical secrets that fail are logged
  * but won't crash the application (graceful degradation).
  * @returns {Promise<object>} Map of loaded secrets.
@@ -90,6 +91,7 @@ export const loadAllSecrets = async () => {
   /** Secret name → env var fallback name → required flag */
   const secretMap = [
     { name: 'gemini-api-key', envKey: 'GEMINI_API_KEY', required: process.env.NODE_ENV === 'production' },
+    { name: 'database-url', envKey: 'DATABASE_URL', required: false },
     { name: 'db-password', envKey: 'DB_PASSWORD', required: false },
     { name: 'datagov-api-key', envKey: 'DATAGOV_API_KEY', required: false },
     { name: 'verifik-api-token', envKey: 'VERIFIK_API_TOKEN', required: false },

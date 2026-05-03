@@ -1,0 +1,28 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="avatarBg" x1="28" y1="24" x2="132" y2="136" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7EC"/>
+      <stop offset="1" stop-color="#D9F0EE"/>
+    </linearGradient>
+    <linearGradient id="avatarCore" x1="53" y1="42" x2="112" y2="117" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A4B68"/>
+      <stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="avatarGlow" x1="56" y1="50" x2="112" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3B274"/>
+      <stop offset="1" stop-color="#E0714A"/>
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="80" fill="url(#avatarBg)"/>
+  <circle cx="80" cy="80" r="52" fill="url(#avatarCore)"/>
+  <circle cx="80" cy="80" r="34" fill="#F8FBFC" fill-opacity="0.18"/>
+  <path d="M80 54C86.6274 54 92 59.3726 92 66C92 72.6274 86.6274 78 80 78C73.3726 78 68 72.6274 68 66C68 59.3726 73.3726 54 80 54Z" fill="url(#avatarGlow)"/>
+  <path d="M60 103.5C63.4055 91.6085 70.6756 85.5 80 85.5C89.3244 85.5 96.5945 91.6085 100 103.5" stroke="#F8FBFC" stroke-width="8" stroke-linecap="round"/>
+  <path d="M42 44L52 54" stroke="#1A4B68" stroke-width="4" stroke-linecap="round"/>
+  <path d="M118 44L108 54" stroke="#1A4B68" stroke-width="4" stroke-linecap="round"/>
+  <path d="M42 116L52 106" stroke="#E0714A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M118 116L108 106" stroke="#E0714A" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="80" cy="24" r="6" fill="#E0714A"/>
+  <circle cx="24" cy="80" r="6" fill="#1A4B68"/>
+  <circle cx="136" cy="80" r="6" fill="#0F766E"/>
+</svg>

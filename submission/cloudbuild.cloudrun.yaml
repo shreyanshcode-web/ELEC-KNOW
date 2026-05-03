@@ -1,0 +1,18 @@
+# Cloud Run image build used by scripts/deploy-cloud-run.js.
+# The script supplies _IMAGE_URI so local machines do not need Docker installed.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id: Build-Cloud-Run-API
+    args:
+      - build
+      - -t
+      - ${_IMAGE_URI}
+      - -f
+      - docker/Dockerfile.api
+      - .
+
+images:
+  - ${_IMAGE_URI}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
